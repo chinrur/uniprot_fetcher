@@ -4,15 +4,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getUniProtData, UniProtData } from "@/services/uniprot";
+import { getUniProtData, UniProtData, getUniProtSequence } from "@/services/uniprot";
 import { CSVLink } from "react-csv";
 import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Home() {
   const [accessionId, setAccessionId] = useState("");
   const [uniProtData, setUniProtData] = useState<UniProtData | null>(null);
+  const [sequence, setSequence] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -21,6 +23,7 @@ export default function Home() {
     { label: "Gene Name", key: "geneName" },
     { label: "Protein Name", key: "proteinName" },
     { label: "Species", key: "species" },
+    { label: "Sequence", key: "sequence" },
   ];
 
   const handleFetchData = async () => {
@@ -28,6 +31,11 @@ export default function Home() {
     try {
       const data = await getUniProtData(accessionId);
       setUniProtData(data);
+
+      // Fetch sequence data
+      const sequenceData = await getUniProtSequence(accessionId);
+      setSequence(sequenceData);
+
     } catch (error) {
       console.error("Failed to fetch data:", error);
       toast({
@@ -36,12 +44,13 @@ export default function Home() {
         description: "Failed to fetch UniProt data. Please check the accession ID and try again.",
       });
       setUniProtData(null);
+      setSequence(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const csvData = uniProtData ? [uniProtData] : [];
+  const csvData = uniProtData ? [{ ...uniProtData, sequence: sequence || '' }] : [];
 
   return (
     <div className="container mx-auto p-4">
@@ -68,6 +77,7 @@ export default function Home() {
                 <TableHead>Gene Name</TableHead>
                 <TableHead>Protein Name</TableHead>
                 <TableHead>Species</TableHead>
+                <TableHead>Sequence</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -76,6 +86,13 @@ export default function Home() {
                 <TableCell>{uniProtData.geneName}</TableCell>
                 <TableCell>{uniProtData.proteinName}</TableCell>
                 <TableCell>{uniProtData.species}</TableCell>
+                <TableCell>
+                  <Textarea
+                    readOnly
+                    value={sequence || 'N/A'}
+                    className="w-full min-h-[50px] font-mono text-xs"
+                  />
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>

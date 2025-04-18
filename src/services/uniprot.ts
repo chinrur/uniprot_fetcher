@@ -54,3 +54,26 @@ export async function getUniProtData(accessionId: string): Promise<UniProtData> 
     throw error;
   }
 }
+
+/**
+ * Fetches the sequence for a given UniProt accession ID.
+ * @param accessionId The UniProt accession ID.
+ * @returns The sequence as a string, or null if there was an error.
+ */
+export async function getUniProtSequence(accessionId: string): Promise<string | null> {
+  const url = `https://rest.uniprot.org/uniprotkb/${accessionId}.fasta`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const text = await response.text();
+    // The sequence starts after the header line, so split the text and take the second part
+    const sequence = text.split('\n').slice(1).join('');
+    return sequence || null;
+  } catch (error) {
+    console.error("Failed to fetch sequence from UniProt API:", error);
+    return null;
+  }
+}
+
