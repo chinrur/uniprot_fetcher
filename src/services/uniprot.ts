@@ -1,4 +1,4 @@
-use server"
+"use server";
 
 /**
  * Represents data fetched from the UniProt API.
